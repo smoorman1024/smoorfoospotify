@@ -20,7 +20,7 @@ def get_token(client_id, client_secret):
     token = resp.json()['access_token']
     return token
 
-def get_code(filename):
+def get_code_from_file(filename):
     idfd = os.open(filename,0)
     code_bytes = os.read(idfd,1000)
     os.close(idfd)
@@ -62,6 +62,8 @@ def get_client_token(client_id, client_secret, code):
     return (token, refresh_token, expires_at)
 
 def load_client_token(filename):
+    if not os.path.exists(filename):
+        return None
     ifd = open(filename, 'r')
     csvr = csv.DictReader(ifd,fieldnames=['token','refresh_token','expires_at'])
     token = None
@@ -74,13 +76,14 @@ def load_client_token(filename):
     return token, refresh_token, datetime.datetime.strptime(expires_at,"%Y%m%d-%H%M%S")
 
 def get_or_refresh_client_token(filename, client_id, client_secret):
-    (client_token, refresh_token, expires_at) = load_client_token(filename)
-    if client_token is None:
+    t = load_client_token(filename)
+    if t is None:
         code = get_code()
         (client_token, refresh_token, expires_at) = get_client_token(client_id,client_secret,code)
         save_client_token(tokens_file, client_token, refresh_token, expires_at)
         return client_token
-    elif datetime.datetime.now() < expires_at:
+    (client_token, refresh_token, expires_at) = t
+    if datetime.datetime.now() < expires_at:
         return client_token
     else:
         client_token, refresh_token, expires_at = get_client_token(client_id, client_secret, refresh_token)
@@ -112,7 +115,8 @@ def get_playlist(client_token,playlist_id):
     return ids
 
 def usage():
-    print("%s -p|--playlist playlist_name -o|--output output_name [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
+    print("Save a playlist: %s -p|--playlist playlist_name -o|--output output_name [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
+    print("List playlists: %s -l|--list [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
 
 def main():
 
@@ -120,7 +124,8 @@ def main():
     output_name = None
     client_id_file = None
     client_secret_file = None
-    opts, args = getopt.getopt(sys.argv[1:],"c:s:p:o:",["clientid=","clientsecret=","playlist=","output="])
+    do_list = False
+    opts, args = getopt.getopt(sys.argv[1:],"c:s:p:o:l",["clientid=","clientsecret=","playlist=","output=","list"])
     for o,a in opts:
         if o in ["-c","--clientid"]:
             client_id_file = a
@@ -130,14 +135,17 @@ def main():
             playlist_name = a
         elif o in ["-o","--output"]:
             output_name = a
-    if playlist_name is None:
-        usage()
-        print('-p|--playlist required',file=sys.stderr)
-        sys.exit(1)
-    if output_name is None:
-        usage()
-        print('-o|--output required',file=sys.stderr)
-        sys.exit(1)
+        elif o in ["-l","--list"]:
+            do_list = True
+    if not do_list:
+        if playlist_name is None:
+            usage()
+            print('-p|--playlist required',file=sys.stderr)
+            sys.exit(1)
+        if output_name is None:
+            usage()
+            print('-o|--output required',file=sys.stderr)
+            sys.exit(1)
     if client_id_file is None:
         client_id_file = client_id_file_default
     if client_secret_file is None:
@@ -151,13 +159,17 @@ def main():
     client_token = get_or_refresh_client_token(tokens_file, client_id, client_secret)
     # get a map of all playlist names to their ids
     name_to_ids = get_playlists(client_token)
-    playlist_id = name_to_ids[playlist_name]
-    ids = get_playlist(client_token,playlist_id)
-    ofd = open(output_name,'w')
-    ofd.write('#\n')
-    for sid in ids:
-        ofd.write('sptf://spotify:track:%s\n'%(sid))
-    ofd.close()
+    if do_list:
+        for name in name_to_ids.keys():
+            print(name)
+    else:
+        playlist_id = name_to_ids[playlist_name]
+        ids = get_playlist(client_token,playlist_id)
+        ofd = open(output_name,'w')
+        ofd.write('#\n')
+        for sid in ids:
+            ofd.write('sptf://spotify:track:%s\n'%(sid))
+        ofd.close()
 
 
 if __name__=="__main__":
