@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-import base64, csv, datetime, os, requests
+import base64, csv, datetime, getopt, os, requests, sys
 import http.server
 import socket
 
-client_id_file = 'data/clientid.txt'
-client_secret_file = 'data/clientsecret.txt'
+client_id_file_default = 'data/clientid.txt'
+client_secret_file_default = 'data/clientsecret.txt'
 code_file = 'data/code.txt'
 #access_token,expiry_time,refresh_token
 tokens_file = 'data/tokens.csv'
@@ -101,28 +101,59 @@ def get_playlists(client_token):
     name_to_ids = {}
     for playlist in resp.json()['items']:
         name_to_ids[playlist['name']] = playlist['id']
-        print('%s,%s'%(playlist['name'],playlist['id']))
     return name_to_ids
 
 def get_playlist(client_token,playlist_id):
     auth_header = 'Authorization: Bearer ' + client_token
     resp = requests.get(url='https://api.spotify.com/v1/playlists/%s'%(playlist_id), headers={'Authorization':auth_header})
-    print(resp.json())
     ids = []
     for item in resp.json()['tracks']['items']:
         ids.append(item['track']['id'])
     return ids
 
+def usage():
+    print("%s -p|--playlist playlist_name -o|--output output_name [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
+
 def main():
+
+    playlist_name = None
+    output_name = None
+    client_id_file = None
+    client_secret_file = None
+    opts, args = getopt.getopt(sys.argv[1:],"c:s:p:o:",["clientid=","clientsecret=","playlist=","output="])
+    for o,a in opts:
+        if o in ["-c","--clientid"]:
+            client_id_file = a
+        elif o in ["-s","--clientsecret"]:
+            client_secret_file = a
+        elif o in ["-p","--playlist"]:
+            playlist_name = a
+        elif o in ["-o","--output"]:
+            output_name = a
+    if playlist_name is None:
+        usage()
+        print('-p|--playlist required',file=sys.stderr)
+        sys.exit(1)
+    if output_name is None:
+        usage()
+        print('-o|--output required',file=sys.stderr)
+        sys.exit(1)
+    if client_id_file is None:
+        client_id_file = client_id_file_default
+    if client_secret_file is None:
+        client_secret_file = client_secret_file_default
+
+    # get app token
     client_id = get_client_id(client_id_file)
     client_secret = get_client_secret(client_secret_file)
     app_token = get_token(client_id,client_secret)
-    print('app_token: ' + app_token)
+    # get client token
     client_token = get_or_refresh_client_token(tokens_file, client_id, client_secret)
+    # get a map of all playlist names to their ids
     name_to_ids = get_playlists(client_token)
-    playlist_id = name_to_ids['132']
+    playlist_id = name_to_ids[playlist_name]
     ids = get_playlist(client_token,playlist_id)
-    ofd = open('132.m3u8','w')
+    ofd = open(output_name,'w')
     ofd.write('#\n')
     for sid in ids:
         ofd.write('sptf://spotify:track:%s\n'%(sid))
