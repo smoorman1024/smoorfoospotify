@@ -97,7 +97,7 @@ def save_client_token(filename, token, refresh_token, expires_at):
     ofd.write("%s,%s,%s\n"%(token,refresh_token,expires_at.strftime("%Y%m%d-%H%M%S")))
     ofd.close()
 
-#curl --request GET 'https://api.spotify.com/v1/me/playlists' --header 'Authorization: Bearer BQAYJi8gi-2rXG4gcvUlTyiJqqcnGiyjVk6lu9JQ2CnIW7yj3ZWqsGA31K6Cfl1jIZlVx1jnTTWfLsfn9kbLbUl5c4_0dpm2qjgRqPRUIgBoA39o-rOfLvgiwXUvLJfNqW6D-xJXcplsBmVGLERyzP-HUflZqv5pW7CWsoYBySmDgfYmXw'
+#curl --request GET 'https://api.spotify.com/v1/me/playlists' --header 'Authorization: Bearer B...w'
 def get_playlists(client_token):
     auth_header = 'Authorization: Bearer ' + client_token
     resp = requests.get(url='https://api.spotify.com/v1/me/playlists', headers={'Authorization':auth_header})
