@@ -11,7 +11,7 @@ code_file = 'data/code.txt'
 tokens_file = 'data/tokens.csv'
 token_url = 'https://accounts.spotify.com/api/token'
 redirect_uri = 'http://localhost:8888/',
-code_uri = 'https://accounts.spotify.com/authorize?response_type=code&client_id=b43dfe37ba294ff1a7458a076722d9fd&scope=user-read-private%20user-read-email%20playlist-read-private%20playlist-read-collaborative&redirect_uri=http%3A%2F%2Flocalhost%3A8888%2F'
+code_uri = 'https://accounts.spotify.com/authorize?response_type=code&scope=user-read-private%20user-read-email%20playlist-read-private%20playlist-read-collaborative&redirect_uri=http%3A%2F%2Flocalhost%3A8888%2F&client_id='
 
 def get_token(client_id, client_secret):
     auth_header = b'Basic ' + base64.standard_b64encode((client_id+':'+client_secret).encode('utf-8'))
@@ -38,9 +38,10 @@ def get_client_secret(filename):
     os.close(idfd)
     return client_id_bytes.decode('utf-8').rstrip()
 
-def get_code():
-    print('enter this in your browser and login spotify')
-    print(code_uri)
+def get_code(client_id):
+    print('enter this in your browser and login to spotify')
+    code_uri_with_client_id = code_uri + client_id
+    print(code_uri_with_client_id)
     s = socket.socket()
     s.bind(('',8888))
     s.listen(1)
@@ -89,7 +90,7 @@ def load_client_token(filename):
 def get_or_refresh_client_token(filename, client_id, client_secret):
     t = load_client_token(filename)
     if t is None:
-        code = get_code()
+        code = get_code(client_id)
         (client_token, refresh_token, expires_at) = get_client_token(client_id,client_secret,code)
         save_client_token(tokens_file, client_token, refresh_token, expires_at)
         return client_token
