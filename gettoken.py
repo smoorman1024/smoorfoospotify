@@ -52,6 +52,17 @@ def get_code():
     code = url.split('=')[1]
     return code
 
+def refresh_client_token(client_id, client_secret, refresh_token):
+    auth_header = b'Basic ' + base64.standard_b64encode((client_id+':'+client_secret).encode('utf-8'))
+    resp = requests.post(url=token_url,headers={'Content-Type':'application/x-www-form-urlencoded','Authorization':auth_header},data={'refresh_token':refresh_token,'grant_type':'refresh_token'})
+    token = resp.json()['access_token']
+    refresh_token = None
+    if 'refresh_token' in resp.json():
+        refresh_token = resp.json()['refresh_token']
+    expires_in = resp.json()['expires_in']
+    expires_at = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
+    return (token, refresh_token, expires_at)
+
 def get_client_token(client_id, client_secret, code):
     auth_header = b'Basic ' + base64.standard_b64encode((client_id+':'+client_secret).encode('utf-8'))
     resp = requests.post(url=token_url,headers={'Content-Type':'application/x-www-form-urlencoded','Authorization':auth_header},data={'code':code,'redirect_uri':redirect_uri,'grant_type':'authorization_code'})
@@ -86,8 +97,10 @@ def get_or_refresh_client_token(filename, client_id, client_secret):
     if datetime.datetime.now() < expires_at:
         return client_token
     else:
-        client_token, refresh_token, expires_at = get_client_token(client_id, client_secret, refresh_token)
-        save_client_token(filename, client_token, refresh_token, expires_at)
+        client_token, new_refresh_token, expires_at = refresh_client_token(client_id, client_secret, refresh_token)
+        if new_refresh_token is None:
+            new_refresh_token = refresh_token
+        save_client_token(filename, client_token, new_refresh_token, expires_at)
         return client_token
         
 
