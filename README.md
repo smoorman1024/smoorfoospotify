@@ -1,13 +1,13 @@
 # SmoorFooSpotify
 ## About
 This application is intended to pull your specified spotify playlists from your personal Spotify account into a file format that Foobar2000 can read in.
-## Relevant
-[Spotify](https://open.spotify.com/)
-[Spotify Developer Portal](https://developer.spotify.com/dashboard/applications)
-[Spotify Developer Documentation](https://developer.spotify.com/documentation/)
-[Foobar2000](https://www.foobar2000.org/)
-[Foobar2000 Spotify Integration Component](https://www.foobar2000.org/components/view/foo_spotify)
-[M3U File Format](https://en.wikipedia.org/wiki/M3U)
+## Relevant Links
+- [Spotify](https://open.spotify.com/)
+- [Spotify Developer Portal](https://developer.spotify.com/dashboard/applications)
+- [Spotify Developer Documentation](https://developer.spotify.com/documentation/)
+- [Foobar2000](https://www.foobar2000.org/)
+- [Foobar2000 Spotify Integration Component](https://www.foobar2000.org/components/view/foo_spotify)
+- [M3U File Format](https://en.wikipedia.org/wiki/M3U)
 ## Usage
 ```
 Save a playlist: ./smoorfoospotify.py -p|--playlist playlist_name -o|--output output_name [-c|--clientid clientid.txt] [-s|--clientsecret clientsecret.txt] [-t|--tokens tokens.csv]
