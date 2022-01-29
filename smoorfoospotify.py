@@ -8,7 +8,7 @@ client_id_file_default = 'data/clientid.txt'
 client_secret_file_default = 'data/clientsecret.txt'
 code_file = 'data/code.txt'
 #access_token,expiry_time,refresh_token
-tokens_file = 'data/tokens.csv'
+tokens_file_default = 'data/tokens.csv'
 token_url = 'https://accounts.spotify.com/api/token'
 redirect_uri = 'http://localhost:8888/',
 code_uri = 'https://accounts.spotify.com/authorize?response_type=code&scope=user-read-private%20user-read-email%20playlist-read-private%20playlist-read-collaborative&redirect_uri=http%3A%2F%2Flocalhost%3A8888%2F&client_id='
@@ -129,8 +129,8 @@ def get_playlist(client_token,playlist_id):
     return ids
 
 def usage():
-    print("Save a playlist: %s -p|--playlist playlist_name -o|--output output_name [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
-    print("List playlists: %s -l|--list [-c|--clientid] [-s--clientsecret]"%(sys.argv[0]),file=sys.stderr)
+    print("Save a playlist: %s -p|--playlist playlist_name -o|--output output_name [-c|--clientid clientid.txt] [-s|--clientsecret clientsecret.txt] [-t|--tokens tokens.csv]"%(sys.argv[0]),file=sys.stderr)
+    print("List playlists: %s -l|--list [-c|--clientid clientid.txt] [-s--clientsecret clientsecret.txt] [-t|--tokens tokens.csv]"%(sys.argv[0]),file=sys.stderr)
 
 def main():
 
@@ -138,8 +138,9 @@ def main():
     output_name = None
     client_id_file = None
     client_secret_file = None
+    tokens_file = None
     do_list = False
-    opts, args = getopt.getopt(sys.argv[1:],"c:s:p:o:l",["clientid=","clientsecret=","playlist=","output=","list"])
+    opts, args = getopt.getopt(sys.argv[1:],"c:s:p:o:t:l",["clientid=","clientsecret=","playlist=","output=","tokens=","list"])
     for o,a in opts:
         if o in ["-c","--clientid"]:
             client_id_file = a
@@ -149,6 +150,8 @@ def main():
             playlist_name = a
         elif o in ["-o","--output"]:
             output_name = a
+        elif o in ["-t","--tokens"]:
+            tokens_file = a
         elif o in ["-l","--list"]:
             do_list = True
     if not do_list:
@@ -164,6 +167,8 @@ def main():
         client_id_file = client_id_file_default
     if client_secret_file is None:
         client_secret_file = client_secret_file_default
+    if tokens_file is None:
+        tokens_file = tokens_file_default
 
     # get app token
     client_id = get_client_id(client_id_file)
